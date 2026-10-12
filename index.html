@@ -85,6 +85,27 @@ main{max-width:1600px;margin:auto;padding:0 clamp(20px,5.6vw,88px)}.hero{min-hei
   .region-button,.footer-button,.dialog-close,.dialog-cancel,.dialog-submit{min-height:42px}
 }
 
+
+/* Keep the mobile catalog within the same viewport width as the home section. */
+@media(max-width:580px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  main,.site-footer{width:100%;max-width:100vw}
+  .catalog-layout,.region-rail,.catalog-main,.catalog-heading,.catalog-tools,.catalog-meta,.cards-grid,.specimen-card,.card-info{width:100%;max-width:100%;min-width:0}
+  .region-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow:visible;padding:0;margin:0}
+  .region-button{width:100%;min-width:0;min-height:44px;padding:6px 5px;gap:3px;font-size:9px}
+  .region-button .region-count{font-size:8px;white-space:normal}
+  .region-button .region-done{font-size:8px;white-space:nowrap}
+  .card-location{min-width:0}
+  .product-type{max-width:42%;overflow:hidden;text-overflow:ellipsis}
+}
+@media(max-width:380px){
+  .topbar{gap:6px}
+  .topbar-note{max-width:43%;overflow:hidden;text-overflow:ellipsis}
+  .region-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .region-button{padding:6px 4px;font-size:8px}
+  .region-button .region-count,.region-button .region-done{font-size:7px}
+}
+
 </style>
 
 </head>
