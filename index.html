@@ -131,8 +131,13 @@ main{max-width:1600px;margin:auto;padding:0 clamp(20px,5.6vw,88px)}.hero{min-hei
   .collect-toggle{padding:6px 6px;font-size:8px}
 }
 
+
+.drive-sync-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.drive-sync-copy{display:flex;flex-direction:column;gap:2px;min-width:128px}.drive-sync-copy strong{font-size:10px;color:#dbe0de}.drive-sync-copy span{font-size:8px;color:#9eabb2}.drive-sync-copy span[data-state="ok"]{color:#b6d8b8}.drive-sync-copy span[data-state="error"]{color:#f0a497}.drive-sync-copy span[data-state="busy"]{color:var(--gold-light)}.topbar-right{display:flex;align-items:center;gap:12px}.topbar-sync-status{font-size:8px;color:#a6b0b7;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.topbar-sync-status[data-state="ok"]{color:#b6d8b8}.topbar-sync-status[data-state="error"]{color:#f0a497}.topbar-sync-status[data-state="busy"]{color:var(--gold-light)}.topbar-sync-button{min-height:36px;border:1px solid rgba(232,180,79,.75);background:var(--gold);color:var(--ink);padding:0 12px;font-size:10px;font-weight:700;white-space:nowrap}.topbar-sync-button:disabled{opacity:.6;cursor:wait}.drive-sync-copy{max-width:340px}.drive-help{margin-top:16px;border:1px solid #435462;padding:10px 12px;color:#c0c9ce;font-size:10px;line-height:1.8}.drive-help summary{color:var(--gold-light);cursor:pointer;font-weight:600}.drive-help ol{padding-left:20px}.drive-help li{margin:7px 0}.drive-help a{color:var(--gold-light)}.drive-help code{background:#263847;padding:1px 4px;overflow-wrap:anywhere}.sync-choice-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.sync-choice-actions button{min-height:56px}.sync-choice-actions button:last-child{grid-column:1/-1}.sync-choice-actions small{font-size:9px;font-weight:400}.sync-dialog .product-form{padding:23px}
+@media(max-width:580px){.topbar{padding:0 10px}.topbar-right{gap:6px}.topbar-note{display:none}.topbar-sync-status{font-size:7px;max-width:88px}.topbar-sync-button{min-height:36px;padding:0 8px;font-size:9px}.drive-sync-tools{order:3;width:auto;display:flex;margin-left:auto}.drive-sync-copy{min-width:0}.drive-sync-copy strong{font-size:9px}.drive-sync-copy span{font-size:8px}.site-footer>span{order:4}.footer-actions{order:5;width:100%;margin-left:0}.footer-actions .footer-button{flex:1}.drive-help{font-size:9px}.sync-choice-actions{grid-template-columns:1fr}.sync-choice-actions button:last-child{grid-column:auto}}
+
 </style>
 
+  <script src="./drive-sync.js" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -140,7 +145,7 @@ main{max-width:1600px;margin:auto;padding:0 clamp(20px,5.6vw,88px)}.hero{min-hei
       <span class="brand-mark" aria-hidden="true"><span>モ</span></span>
       <span class="brand-name"><strong>モケケ</strong><small>COLLECTION CABINET</small></span>
     </a>
-    <div class="topbar-note"><span class="live-dot"></span> 個人收藏紀錄・僅儲存在此瀏覽器</div>
+    <div class="topbar-right"><div class="topbar-note"><span class="live-dot"></span> 個人收藏紀錄・可同步到 Google 雲端硬碟</div><span id="driveSyncStatus" class="topbar-sync-status" role="status" aria-live="polite">尚未設定</span><button id="driveSyncButton" class="topbar-sync-button" type="button">同步雲端</button></div>
   </header>
 
   <main id="top">
@@ -201,7 +206,7 @@ main{max-width:1600px;margin:auto;padding:0 clamp(20px,5.6vw,88px)}.hero{min-hei
   <dialog id="newProductDialog" class="product-dialog" aria-labelledby="dialogTitle">
     <form id="newProductForm" class="product-form">
       <div class="dialog-heading"><div><span class="section-kicker">ADD TO YOUR ARCHIVE</span><h2 id="dialogTitle">新增一款收藏</h2></div><button id="closeDialogButton" class="dialog-close" type="button" aria-label="關閉">×</button></div>
-      <p class="dialog-intro">填上商品資訊，再選一張照片；新增項目只會存放在你的瀏覽器中。</p>
+      <p class="dialog-intro">填上商品資訊，再選一張照片；新增項目會保存於本機，連結 Google 雲端後也會同步。</p>
       <label class="form-field">商品名稱 <span>必填</span><input id="newProductName" name="name" type="text" maxlength="80" required placeholder="例如：ご当地限定モケケ" /></label>
       <div class="form-row">
         <label class="form-field">收藏地區 <span>必填</span><select id="newProductRegion" name="region" required></select></label>
@@ -215,9 +220,40 @@ main{max-width:1600px;margin:auto;padding:0 clamp(20px,5.6vw,88px)}.hero{min-hei
     </form>
   </dialog>
 
+  <dialog id="driveSettingsDialog" class="product-dialog sync-dialog" aria-labelledby="driveSettingsTitle">
+    <div class="product-form">
+      <div class="dialog-heading"><div><span class="section-kicker">GOOGLE DRIVE SYNC</span><h2 id="driveSettingsTitle">設定 Google 雲端同步</h2></div><button id="cancelDriveSettings" class="dialog-close" type="button" aria-label="關閉">×</button></div>
+      <p class="dialog-intro">首次設定後，每次開啟此頁面請按一次「同步」。授權成功後，本次使用期間的收藏變更會自動上傳。Google 密碼不會交給本網站。</p>
+      <label class="form-field">Google OAuth 用戶端 ID <span>必填</span><input id="driveClientId" type="text" autocomplete="off" placeholder="例如：123456789-abc.apps.googleusercontent.com" /></label>
+      <details class="drive-help">
+        <summary>第一次設定說明</summary>
+        <ol>
+          <li>開啟 <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>，登入自己的 Google 帳戶並建立專案。</li>
+          <li>在「API 和服務 → 程式庫」搜尋並啟用「Google Drive API」。</li>
+          <li>在「OAuth 同意畫面」建立外部使用者設定；若選「測試中」，把自己的 Gmail 加入測試使用者。</li>
+          <li>在「憑證」建立「OAuth 用戶端 ID」，應用程式類型選「網頁應用程式」。</li>
+          <li>「已授權的 JavaScript 來源」填入 <code>https://tinasu8991.github.io</code>（不要加後面的路徑）。不需設定重新導向網址。</li>
+          <li>複製產生的「用戶端 ID」貼到上方欄位並儲存。這是公開識別碼，不是密碼；不要把用戶端密碼貼到網站。</li>
+        </ol>
+        <p>本網站只使用 Google 提供的 <code>drive.file</code> 權限來建立及更新自己的收藏備份檔，不會讀取雲端硬碟的其他檔案。若 Google 顯示未經驗證的應用程式，私人測試時需使用加入測試使用者的帳戶。</p>
+        <a href="https://developers.google.com/identity/oauth2/web/guides/get-google-api-clientid" target="_blank" rel="noopener noreferrer">查看 Google 官方用戶端 ID 說明 ↗</a>
+      </details>
+      <div class="dialog-actions"><button id="saveDriveSettings" class="dialog-submit" type="button">儲存用戶端 ID</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="driveConflictDialog" class="product-dialog sync-dialog" aria-labelledby="driveConflictTitle">
+    <div class="product-form">
+      <div class="dialog-heading"><div><span class="section-kicker">SYNC CHOICE</span><h2 id="driveConflictTitle">選擇要保留的紀錄</h2></div></div>
+      <p class="dialog-intro">Google 雲端和這台裝置都有不同的收藏紀錄。請選一份作為最新版本；另一份會被取代。若不確定，請先取消並匯出本機備份。</p>
+      <div class="sync-choice-actions"><button id="useCloudVersion" class="dialog-submit" type="button">使用雲端紀錄<br /><small>下載到這台裝置</small></button><button id="useDeviceVersion" class="dialog-cancel" type="button">使用本機紀錄<br /><small>取代雲端備份</small></button><button id="cancelDriveConflict" class="dialog-cancel" type="button">先取消</button></div>
+    </div>
+  </dialog>
+
   <footer class="site-footer">
     <div class="footer-brand"><span class="brand-mark small" aria-hidden="true"><span>モ</span></span><span>モケケ收藏清單</span></div>
-    <span>你的私人收藏紀錄只保存在目前瀏覽器。</span>
+    <div class="drive-sync-tools"><div class="drive-sync-copy"><strong>Google 雲端同步設定</strong><span>重新開啟網站後，請按頂部「同步雲端」</span></div><button id="driveSettingsButton" class="footer-button" type="button">設定</button></div>
+    <span>未連結雲端時，紀錄只保存在目前瀏覽器。</span>
     <div class="footer-actions"><button id="exportButton" class="footer-button" type="button">匯出備份</button><label class="footer-button import-button" for="importInput">匯入備份</label><input id="importInput" type="file" accept="application/json,.json" hidden /><button id="clearButton" class="footer-button danger-button" type="button">清除紀錄</button></div>
   </footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -269,7 +305,11 @@ main{max-width:1600px;margin:auto;padding:0 clamp(20px,5.6vw,88px)}.hero{min-hei
     catch { return fallback; }
   }
   function storageWrite(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      window.dispatchEvent(new CustomEvent('mokeke:local-change', { detail: { key } }));
+      return true;
+    }
     catch { showToast('瀏覽器儲存空間不足；請先匯出備份或改用較小的照片。'); return false; }
   }
   function showToast(message) {
@@ -501,6 +541,23 @@ main{max-width:1600px;margin:auto;padding:0 clamp(20px,5.6vw,88px)}.hero{min-hei
     } finally { elements.importInput.value = ''; }
   }
 
+  window.addEventListener('mokeke:drive-restore', (event) => {
+    const payload = event.detail?.payload;
+    const ids = payload?.checkedIds || payload?.checked || (Array.isArray(payload) ? payload : null);
+    if (!Array.isArray(ids)) { showToast('雲端資料格式不正確，沒有更動目前清單。'); return; }
+    customProducts = normalizeCustom(Array.isArray(payload?.customProducts) ? payload.customProducts : []);
+    rebuildProducts();
+    const validIds = new Set(products.map((item) => item.id));
+    checked = new Set(ids.filter((id) => validIds.has(id)));
+    const userItemsStored = storageWrite(USER_ITEMS_KEY, customProducts);
+    const checkedStored = storageWrite(STORAGE_KEY, [...checked]);
+    updateHeading();
+    updateProgress();
+    renderCards();
+    if (userItemsStored && checkedStored) showToast(`已載入雲端紀錄：${checked.size} 筆收藏、${customProducts.length} 個新增品項。`);
+    else showToast('雲端紀錄已載入畫面，但本機空間不足；請匯出備份。');
+  });
+
   async function init() {
     try {
       if (Array.isArray(window.MOKEKE_CATALOG)) groups = window.MOKEKE_CATALOG;
@@ -579,6 +636,310 @@ main{max-width:1600px;margin:auto;padding:0 clamp(20px,5.6vw,88px)}.hero{min-hei
     }
   });
   init();
+})();
+
+</script>
+<script>
+(() => {
+  const CLIENT_ID_KEY = 'mokeke-drive-client-id-v1';
+  const STATE_KEY = 'mokeke-drive-sync-state-v1';
+  const COLLECTION_KEY = 'mokeke-collection-v1';
+  const CUSTOM_KEY = 'mokeke-collection-custom-v1';
+  const FILE_NAME = 'mokeke-collection-backup.json';
+  const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+  const els = {
+    button: document.getElementById('driveSyncButton'),
+    settingsButton: document.getElementById('driveSettingsButton'),
+    status: document.getElementById('driveSyncStatus'),
+    settings: document.getElementById('driveSettingsDialog'),
+    clientId: document.getElementById('driveClientId'),
+    saveSettings: document.getElementById('saveDriveSettings'),
+    cancelSettings: document.getElementById('cancelDriveSettings'),
+    conflict: document.getElementById('driveConflictDialog'),
+    useCloud: document.getElementById('useCloudVersion'),
+    useDevice: document.getElementById('useDeviceVersion'),
+    cancelConflict: document.getElementById('cancelDriveConflict')
+  };
+  if (!els.button || !els.status) return;
+
+  let accessToken = '';
+  let applyingCloud = false;
+  let busy = false;
+  let autoTimer = 0;
+  let gisPromise;
+
+  function getClientId() {
+    try { return localStorage.getItem(CLIENT_ID_KEY) || ''; } catch { return ''; }
+  }
+  function setStatus(text, state = '') {
+    els.status.textContent = text;
+    els.status.dataset.state = state;
+  }
+  function readState() {
+    try { return JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); } catch { return null; }
+  }
+  function saveState(state) {
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch { /* Sync still works for this session. */ }
+  }
+  function localPayload() {
+    let checkedIds = [];
+    let customProducts = [];
+    try { checkedIds = JSON.parse(localStorage.getItem(COLLECTION_KEY) || '[]'); } catch { /* use empty list */ }
+    try { customProducts = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]'); } catch { /* use empty list */ }
+    return {
+      format: 'mokeke-collection-backup', version: 2,
+      exportedAt: new Date().toISOString(),
+      checkedIds: Array.isArray(checkedIds) ? checkedIds : [],
+      customProducts: Array.isArray(customProducts) ? customProducts : []
+    };
+  }
+  function payloadData(payload) {
+    return JSON.stringify({ checkedIds: payload.checkedIds || [], customProducts: payload.customProducts || [] });
+  }
+  async function hashPayload(payload) {
+    const text = payloadData(payload);
+    if (window.crypto?.subtle && window.isSecureContext) {
+      const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+      return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+    }
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i += 1) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+    return (hash >>> 0).toString(16);
+  }
+  function loadGoogleIdentity() {
+    if (window.google?.accounts?.oauth2) return Promise.resolve();
+    if (gisPromise) return gisPromise;
+    gisPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.onload = () => window.google?.accounts?.oauth2 ? resolve() : reject(new Error('Google 授權元件載入失敗'));
+      script.onerror = () => reject(new Error('無法載入 Google 授權元件，請檢查網路連線。'));
+      document.head.appendChild(script);
+    });
+    return gisPromise;
+  }
+  async function requestAccessToken(clientId) {
+    await loadGoogleIdentity();
+    return new Promise((resolve, reject) => {
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: SCOPE,
+        callback: (response) => {
+          if (response?.access_token) resolve(response.access_token);
+          else reject(new Error(response?.error_description || 'Google 授權未完成，請再試一次。'));
+        },
+        error_callback: (error) => reject(new Error(error?.message || 'Google 授權視窗未完成。'))
+      });
+      tokenClient.requestAccessToken();
+    });
+  }
+  async function api(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: { Authorization: `Bearer ${accessToken}`, ...(options.headers || {}) }
+    });
+    if (response.status === 401) {
+      accessToken = '';
+      throw new Error('Google 授權已到期，請再按一次「同步 Google 雲端硬碟」。');
+    }
+    if (!response.ok) {
+      let detail = '';
+      try { detail = (await response.json()).error?.message || ''; } catch { /* response may not be JSON */ }
+      throw new Error(detail ? `Google 雲端硬碟回應：${detail}` : `Google 雲端硬碟連線失敗（${response.status}）。`);
+    }
+    return response;
+  }
+  async function findCloudFile() {
+    const query = `name = '${FILE_NAME}' and trashed = false`;
+    const params = new URLSearchParams({
+      q: query, spaces: 'drive', pageSize: '20',
+      orderBy: 'modifiedTime desc', fields: 'files(id,name,modifiedTime)'
+    });
+    const response = await api(`https://www.googleapis.com/drive/v3/files?${params}`);
+    const result = await response.json();
+    return result.files?.[0] || null;
+  }
+  async function readCloudFile(fileId) {
+    const response = await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`);
+    const payload = await response.json();
+    if (payload?.format !== 'mokeke-collection-backup' || !Array.isArray(payload.checkedIds) || !Array.isArray(payload.customProducts)) {
+      throw new Error('雲端備份格式不正確，為保護資料，本次沒有更動你的清單。');
+    }
+    return payload;
+  }
+  async function writeCloudFile(payload, fileId = '') {
+    const body = JSON.stringify(payload);
+    if (fileId) {
+      const response = await api(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media&fields=id,name,modifiedTime`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body
+      });
+      return response.json();
+    }
+    const boundary = `mokeke_${window.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`}`;
+    const metadata = { name: FILE_NAME, mimeType: 'application/json' };
+    const multipart = new Blob([
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+      JSON.stringify(metadata),
+      `\r\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,
+      body,
+      `\r\n--${boundary}--`
+    ]);
+    const response = await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime', {
+      method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipart
+    });
+    return response.json();
+  }
+  async function askConflict() {
+    if (typeof els.conflict.showModal !== 'function') {
+      return window.confirm('雲端與這台裝置都有不同紀錄。按「確定」使用雲端版本；按「取消」先不處理，避免覆蓋資料。') ? 'cloud' : 'cancel';
+    }
+    return new Promise((resolve) => {
+      const finish = (choice) => { els.conflict.close(); resolve(choice); };
+      els.useCloud.onclick = () => finish('cloud');
+      els.useDevice.onclick = () => finish('device');
+      els.cancelConflict.onclick = () => finish('cancel');
+      els.conflict.addEventListener('cancel', () => resolve('cancel'), { once: true });
+      els.conflict.showModal();
+    });
+  }
+  function useCloudPayload(payload) {
+    applyingCloud = true;
+    window.dispatchEvent(new CustomEvent('mokeke:drive-restore', { detail: { payload } }));
+    applyingCloud = false;
+  }
+  async function completeWithCloud(payload, file, hash) {
+    useCloudPayload(payload);
+    saveState({ fileId: file.id, lastRemoteModifiedTime: file.modifiedTime, lastLocalHash: hash });
+    setStatus('已從 Google 雲端硬碟載入紀錄', 'ok');
+  }
+  async function uploadLocal(payload, file) {
+    const uploaded = await writeCloudFile(payload, file?.id || '');
+    const hash = await hashPayload(payload);
+    saveState({ fileId: uploaded.id, lastRemoteModifiedTime: uploaded.modifiedTime, lastLocalHash: hash });
+    setStatus('已同步；本次修改會自動上傳', 'ok');
+  }
+  async function syncNow() {
+    const local = localPayload();
+    const localHash = await hashPayload(local);
+    const file = await findCloudFile();
+    if (!file) {
+      await uploadLocal(local, null);
+      return;
+    }
+    const remote = await readCloudFile(file.id);
+    const remoteHash = await hashPayload(remote);
+    const state = readState();
+    if (localHash === remoteHash) {
+      saveState({ fileId: file.id, lastRemoteModifiedTime: file.modifiedTime, lastLocalHash: localHash });
+      setStatus('已同步；雲端與本機紀錄相同', 'ok');
+      return;
+    }
+    if (!state || state.fileId !== file.id) {
+      const localHasRecords = local.checkedIds.length > 0 || local.customProducts.length > 0;
+      const remoteHasRecords = remote.checkedIds.length > 0 || remote.customProducts.length > 0;
+      if (!localHasRecords && remoteHasRecords) {
+        await completeWithCloud(remote, file, remoteHash);
+        return;
+      }
+      if (localHasRecords && !remoteHasRecords) {
+        await uploadLocal(local, file);
+        return;
+      }
+      if (!localHasRecords && !remoteHasRecords) {
+        saveState({ fileId: file.id, lastRemoteModifiedTime: file.modifiedTime, lastLocalHash: localHash });
+        setStatus('已同步；目前沒有收藏紀錄', 'ok');
+        return;
+      }
+      const choice = await askConflict();
+      if (choice === 'cloud') await completeWithCloud(remote, file, remoteHash);
+      else if (choice === 'device') await uploadLocal(local, file);
+      else setStatus('已取消同步；資料沒有被覆蓋', '');
+      return;
+    }
+    const localChanged = localHash !== state.lastLocalHash;
+    const cloudChanged = file.modifiedTime !== state.lastRemoteModifiedTime;
+    if (localChanged && cloudChanged) {
+      const choice = await askConflict();
+      if (choice === 'cloud') await completeWithCloud(remote, file, remoteHash);
+      else if (choice === 'device') await uploadLocal(local, file);
+      else setStatus('已取消同步；資料沒有被覆蓋', '');
+    } else if (cloudChanged) {
+      await completeWithCloud(remote, file, remoteHash);
+    } else if (localChanged) {
+      await uploadLocal(local, file);
+    } else {
+      setStatus('已同步；目前沒有新變更', 'ok');
+    }
+  }
+  async function connectAndSync() {
+    if (busy) return;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      setStatus('請使用 GitHub Pages 的 https 網址進行雲端同步', 'error');
+      return;
+    }
+    let clientId = (els.clientId?.value || getClientId()).trim();
+    if (!clientId) {
+      setStatus('請先設定 Google OAuth 用戶端 ID', '');
+      els.settings.showModal();
+      return;
+    }
+    try { localStorage.setItem(CLIENT_ID_KEY, clientId); } catch { /* client ID can be entered again next time */ }
+    busy = true;
+    els.button.disabled = true;
+    setStatus('正在開啟 Google 授權…', 'busy');
+    try {
+      accessToken = await requestAccessToken(clientId);
+      setStatus('正在檢查雲端紀錄…', 'busy');
+      await syncNow();
+    } catch (error) {
+      setStatus(error.message || '同步失敗；本機紀錄仍保留。', 'error');
+    } finally {
+      busy = false;
+      els.button.disabled = false;
+      if (autoTimer) scheduleAutosave();
+    }
+  }
+  async function pushLatest() {
+    if (!accessToken || busy || !getClientId()) return;
+    const payload = localPayload();
+    const state = readState();
+    if (!state?.fileId) return;
+    busy = true;
+    setStatus('正在上傳剛才的修改…', 'busy');
+    try { await uploadLocal(payload, { id: state.fileId }); }
+    catch (error) { setStatus(error.message || '雲端上傳失敗；本機紀錄仍保留。', 'error'); }
+    finally { busy = false; }
+  }
+  function scheduleAutosave() {
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => { autoTimer = 0; pushLatest(); }, 900);
+  }
+
+  els.button.addEventListener('click', connectAndSync);
+  els.settingsButton?.addEventListener('click', () => {
+    if (els.clientId) els.clientId.value = getClientId();
+    els.settings.showModal();
+  });
+  els.saveSettings?.addEventListener('click', () => {
+    const value = els.clientId.value.trim();
+    if (!value || !value.endsWith('.apps.googleusercontent.com')) {
+      setStatus('請貼上 Google 提供的用戶端 ID（通常以 .apps.googleusercontent.com 結尾）', 'error');
+      return;
+    }
+    try { localStorage.setItem(CLIENT_ID_KEY, value); } catch { /* saved only in the input for this page */ }
+    els.settings.close();
+    setStatus('設定已儲存；請按「同步 Google 雲端硬碟」授權並載入紀錄', 'ok');
+  });
+  els.cancelSettings?.addEventListener('click', () => els.settings.close());
+  window.addEventListener('mokeke:local-change', () => {
+    if (applyingCloud) return;
+    if (accessToken && readState()?.fileId) scheduleAutosave();
+    else setStatus('已儲存在本機；按「同步 Google 雲端硬碟」後可同步', 'local');
+  });
+  const savedClientId = getClientId();
+  if (els.clientId) els.clientId.value = savedClientId;
+  setStatus(savedClientId ? '尚未同步；按按鈕載入雲端紀錄' : '尚未設定 Google 雲端同步', '');
 })();
 
 </script>
